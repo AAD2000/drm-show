@@ -1,0 +1,1 @@
+rm -rf ./build && mkdir build &&echo aad | sudo -S rmmod driver

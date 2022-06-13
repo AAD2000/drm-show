@@ -1,10 +1,17 @@
 #ifndef __KERNEL__
 #include <stdint.h>
-#include <libdrm/drm.h>
-#include <libdrm/drm_mode.h>
+#include <drm/drm.h>
+#include <drm/drm_mode.h>
 #else
 #include <uapi/drm/drm_mode.h>
 #endif /* !__KERNEL__ */
+
+#define DRM_ZOCL_BO_FLAGS_HOST_BO    (0x1 << 26)
+#define DRM_ZOCL_BO_FLAGS_COHERENT   (0x1 << 27)
+#define DRM_ZOCL_BO_FLAGS_CMA        (0x1 << 28)
+#define DRM_ZOCL_BO_FLAGS_SVM        (0x1 << 29)
+#define DRM_ZOCL_BO_FLAGS_USERPTR    (0x1 << 30)
+#define DRM_ZOCL_BO_FLAGS_EXECBUF    (0x1 << 31)
 
 /*
  * enum drm_zocl_ops - ioctl command code enumerations

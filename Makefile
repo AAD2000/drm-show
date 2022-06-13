@@ -1,4 +1,4 @@
-obj-m += mydriver.o
+obj-m += driver.o
  
 KDIR = /lib/modules/$(shell uname -r)/build
  
