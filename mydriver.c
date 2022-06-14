@@ -816,14 +816,20 @@ static int my_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
       } else {
           printk("----- ERROR -----");
       }
+
+      printk("%d",zdev == NULL);
       drm->dev_private = zdev;
       zdev->ddev = drm;
+
+
 
       return 0;
 
 }
 
-
+static void my_pci_remove(struct pci_dev *pdev)
+{
+}
 
 static const struct pci_device_id my_pci_table[] =  { {
      PCI_DEVICE(PCI_ANY_ID,PCI_ANY_ID)
@@ -845,7 +851,6 @@ static struct pci_driver my_pci_driver = {
 static int __init etx_driver_init(void)
 {
   int i =pci_register_driver(&my_pci_driver);
-  printk("%d", i);
   return 0;
 
 }

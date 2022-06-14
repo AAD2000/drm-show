@@ -7,7 +7,7 @@
 
 int main(int argc, char const *argv[])
 {
-    int fd = open("/dev/dri/card28",  O_RDWR);
+    int fd = open("/dev/dri/renderD133",  O_RDWR);
     if (fd < 0) {
         return -10;
     }
