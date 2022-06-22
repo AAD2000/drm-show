@@ -1,0 +1,1 @@
+cd build/driver && make &&  echo aad | sudo -S insmod driver.ko && sleep 2 && cd ../test && gcc mytest.c && echo '----------------' && echo '      TEST      '  && echo '----------------'  && ./a.out
