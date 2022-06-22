@@ -1,5 +1,5 @@
-#include "mylib.h"
-#include "zocl_error.h"
+#include "../common/mylib.h"
+#include "__error.h"
 #include <linux/device.h>
 #include <linux/iommu.h>
 #include <linux/pagemap.h>
@@ -24,23 +24,23 @@
 
 
 
-enum drm_zocl_execbuf_state {
-  DRM_ZOCL_EXECBUF_STATE_COMPLETE = 0,
-  DRM_ZOCL_EXECBUF_STATE_RUNNING,
-  DRM_ZOCL_EXECBUF_STATE_SUBMITTED,
-  DRM_ZOCL_EXECBUF_STATE_QUEUED,
-  DRM_ZOCL_EXECBUF_STATE_ERROR,
-  DRM_ZOCL_EXECBUF_STATE_ABORT,
+enum drm___execbuf_state {
+  DRM___EXECBUF_STATE_COMPLETE = 0,
+  DRM___EXECBUF_STATE_RUNNING,
+  DRM___EXECBUF_STATE_SUBMITTED,
+  DRM___EXECBUF_STATE_QUEUED,
+  DRM___EXECBUF_STATE_ERROR,
+  DRM___EXECBUF_STATE_ABORT,
 };
 
 
 
-struct drm_zocl_exec_metadata {
-	enum drm_zocl_execbuf_state state;
+struct drm___exec_metadata {
+	enum drm___execbuf_state state;
 	unsigned int                index;
 };
 
-struct drm_zocl_bo {
+struct drm___bo {
 	union {
 		struct drm_gem_cma_object       cma_base;
 		struct {
@@ -52,37 +52,37 @@ struct drm_zocl_bo {
 		};
 	};
 	struct drm_mm_node            *mm_node;
-	struct drm_zocl_exec_metadata  metadata;
+	struct drm___exec_metadata  metadata;
 	unsigned int                   mem_index;
 	uint32_t                       flags;
 	unsigned int                   user_flags;
 };
 
-#define ZOCL_BO_FLAGS_CACHEABLE		(1 << 24)
-#define ZOCL_BO_FLAGS_HOST_BO		(1 << 25)
-#define ZOCL_BO_FLAGS_COHERENT		(1 << 26)
-#define ZOCL_BO_FLAGS_SVM		(1 << 27)
-#define ZOCL_BO_FLAGS_USERPTR		(1 << 28)
-#define ZOCL_BO_FLAGS_CMA		(1 << 29)
-#define ZOCL_BO_FLAGS_P2P		(1 << 30)
-#define ZOCL_BO_FLAGS_EXECBUF		(1 << 31)
+#define __BO_FLAGS_CACHEABLE		(1 << 24)
+#define __BO_FLAGS_HOST_BO		(1 << 25)
+#define __BO_FLAGS_COHERENT		(1 << 26)
+#define __BO_FLAGS_SVM		(1 << 27)
+#define __BO_FLAGS_USERPTR		(1 << 28)
+#define __BO_FLAGS_CMA		(1 << 29)
+#define __BO_FLAGS_P2P		(1 << 30)
+#define __BO_FLAGS_EXECBUF		(1 << 31)
 
 /* BO types we support */
-#define ZOCL_BO_NORMAL	(XRT_DRV_BO_HOST_MEM | XRT_DRM_SHMEM | \
+#define __BO_NORMAL	(XRT_DRV_BO_HOST_MEM | XRT_DRM_SHMEM | \
 			XRT_DRV_BO_DRM_ALLOC)
-#define ZOCL_BO_EXECBUF	(ZOCL_BO_NORMAL)
-#define ZOCL_BO_CACHE	(ZOCL_BO_NORMAL | XRT_CACHEABLE)
-#define ZOCL_BO_USERPTR	(XRT_USER_MEM | XRT_DRV_BO_USER_ALLOC)
-#define ZOCL_BO_SVM	(XRT_DRV_BO_HOST_MEM | XRT_DRM_SHMEM | \
+#define __BO_EXECBUF	(__BO_NORMAL)
+#define __BO_CACHE	(__BO_NORMAL | XRT_CACHEABLE)
+#define __BO_USERPTR	(XRT_USER_MEM | XRT_DRV_BO_USER_ALLOC)
+#define __BO_SVM	(XRT_DRV_BO_HOST_MEM | XRT_DRM_SHMEM | \
 			XRT_DRV_BO_DRM_ALLOC)
-#define ZOCL_BO_PL_DDR	(XRT_DEVICE_MEM)
-#define ZOCL_BO_HOST_BO	(XRT_DRV_BO_HOST_MEM)
-#define ZOCL_BO_IMPORT	(XRT_DRM_IMPORT | XRT_DRV_BO_HOST_MEM)
+#define __BO_PL_DDR	(XRT_DEVICE_MEM)
+#define __BO_HOST_BO	(XRT_DRV_BO_HOST_MEM)
+#define __BO_IMPORT	(XRT_DRM_IMPORT | XRT_DRV_BO_HOST_MEM)
 
-struct drm_zocl_dev {
+struct drm___dev {
 	struct drm_device       *ddev;
 	struct fpga_manager     *fpga_mgr;
-	struct zocl_ert_dev     *ert;
+	struct __ert_dev     *ert;
 	struct iommu_domain	*domain;
 	phys_addr_t              host_mem;
 	resource_size_t          host_mem_len;
@@ -91,7 +91,7 @@ struct drm_zocl_dev {
 	unsigned int		 cu_num;
 	unsigned int             irq[MAX_CU_NUM];
 	struct sched_exec_core  *exec;
-	/* Zocl driver memory list head */
+	/* _ driver memory list head */
 	struct list_head	 zm_list_head;
 	struct drm_mm           *zm_drm_mm;    /* DRM MM node for PL-DDR */
 	struct mutex		 mm_lock;
@@ -107,7 +107,7 @@ struct drm_zocl_dev {
 
 	/*
 	 * This RW lock is to protect the sysfs nodes exported
-	 * by zocl driver. Currently, all zocl attributes exported
+	 * by _ driver. Currently, all _ attributes exported
 	 * to sysfs nodes are protected by a single lock. Any read
 	 * functions which not atomically touch those attributes should
 	 * hold read lock; And all write functions which not atomically
@@ -121,22 +121,24 @@ struct drm_zocl_dev {
 	struct mailbox		*zdev_mailbox;
 	const struct zdev_data	*zdev_data_info;
 	struct generic_cu	*generic_cu;
-	struct zocl_error	 zdev_error;
-	struct zocl_aie		*aie;
-	struct zocl_watchdog_dev *watchdog;
+	struct __error	 zdev_error;
+	struct __aie		*aie;
+	struct __watchdog_dev *watchdog;
 
 	int			 num_pr_slot;
 	int			 full_overlay_id;
-	struct drm_zocl_slot	*pr_slot[MAX_PR_SLOT_NUM];
+	struct drm___slot	*pr_slot[MAX_PR_SLOT_NUM];
 };
 
+struct drm___dev* zdev = NULL;
+
 static inline struct
-drm_zocl_bo *to_zocl_bo(struct drm_gem_object *bo)
+drm___bo *to___bo(struct drm_gem_object *bo)
 {
-	return (struct drm_zocl_bo *) bo;
+	return (struct drm___bo *) bo;
 }
 
-void zocl_describe(const struct drm_zocl_bo *obj)
+void __describe(const struct drm___bo *obj)
 {
 	size_t size_in_kb = obj->cma_base.base.size / 1024;
 	size_t physical_addr = obj->cma_base.paddr;
@@ -147,33 +149,33 @@ void zocl_describe(const struct drm_zocl_bo *obj)
 			physical_addr);
 }
 
-void zocl_free_userptr_bo(struct drm_gem_object *gem_obj)
+void __free_userptr_bo(struct drm_gem_object *gem_obj)
 {
 	/* Do all drm_gem_cma_free_object(bo->base) do, execpt free vaddr */
-	struct drm_zocl_bo *zocl_bo = to_zocl_bo(gem_obj);
+	struct drm___bo *__bo = to___bo(gem_obj);
 
-	DRM_DEBUG("%s: obj 0x%px", __func__, zocl_bo);
-	if (zocl_bo->cma_base.sgt)
-		sg_free_table(zocl_bo->cma_base.sgt);
+	DRM_DEBUG("%s: obj 0x%px", __func__, __bo);
+	if (__bo->cma_base.sgt)
+		sg_free_table(__bo->cma_base.sgt);
 
 	drm_gem_object_release(gem_obj);
 
-	kfree(&zocl_bo->cma_base);
+	kfree(&__bo->cma_base);
 }
 
-void zocl_free_host_bo(struct drm_gem_object *gem_obj)
+void __free_host_bo(struct drm_gem_object *gem_obj)
 {
-	struct drm_zocl_bo *zocl_bo = to_zocl_bo(gem_obj);
+	struct drm___bo *__bo = to___bo(gem_obj);
 
-	DRM_DEBUG("%s: obj 0x%px", __func__, zocl_bo);
+	DRM_DEBUG("%s: obj 0x%px", __func__, __bo);
 
-	memunmap(zocl_bo->cma_base.vaddr);
+	memunmap(__bo->cma_base.vaddr);
 
 	drm_gem_object_release(gem_obj);
 
-	kfree(&zocl_bo->cma_base);
+	kfree(&__bo->cma_base);
 }
-struct drm_zocl_mm_stat {
+struct drm___mm_stat {
 	size_t memory_usage;
 	unsigned int bo_count;
 };
@@ -186,44 +188,46 @@ struct addr_aperture {
 	u32		slot_idx;
 };
 
-enum zocl_mem_type {
-	ZOCL_MEM_TYPE_CMA		= 0,
-	ZOCL_MEM_TYPE_RANGE_ALLOC	= 1,
-	ZOCL_MEM_TYPE_STREAMING		= 2,
+enum __mem_type {
+	__MEM_TYPE_CMA		= 0,
+	__MEM_TYPE_RANGE_ALLOC	= 1,
+	__MEM_TYPE_STREAMING		= 2,
 };
 
 /*
- * Memory structure in zocl driver. There will be an array of this
+ * Memory structure in _ driver. There will be an array of this
  * structure where each element is representing each section in
  * the memory topology in xclbin.
  */
-struct zocl_mem {
+struct __mem {
 	u32			zm_mem_idx;
-	enum zocl_mem_type	zm_type;
+	enum __mem_type	zm_type;
 	unsigned int		zm_used;
 	u64			zm_base_addr;
 	u64			zm_size;
-	struct drm_zocl_mm_stat zm_stat;
+	struct drm___mm_stat zm_stat;
 	struct list_head	link;
 	struct list_head        zm_list;
 };
 
 
-static struct zocl_mem *
-zocl_get_mem_by_mem_index(struct drm_zocl_dev *zdev, u32 mem_index)
+static struct __mem *
+__get_mem_by_mem_index(struct drm___dev *zdev, u32 mem_index)
 {
-	struct zocl_mem *curr_mem = NULL;
+	struct __mem *curr_mem = NULL;
 	list_for_each_entry(curr_mem, &zdev->zm_list_head, link)
+	    printk("seems good112");
+
 		if (curr_mem->zm_mem_idx == mem_index)
 			return curr_mem;
 
 	return NULL;
 }
 
-void zocl_update_mem_stat(struct drm_zocl_dev *zdev, u64 size, int count,
+void __update_mem_stat(struct drm___dev *zdev, u64 size, int count,
 		uint32_t index)
 {
-	struct zocl_mem *mem = zocl_get_mem_by_mem_index(zdev, index);
+	struct __mem *mem = __get_mem_by_mem_index(zdev, index);
 	if (!mem)
 		return;
 
@@ -233,11 +237,11 @@ void zocl_update_mem_stat(struct drm_zocl_dev *zdev, u64 size, int count,
 	 * through our bank list and find the CMA bank to update
 	 * its usage.
 	 */
-	if (mem->zm_type != ZOCL_MEM_TYPE_RANGE_ALLOC) {
-		struct zocl_mem *curr_mem = NULL;
+	if (mem->zm_type != __MEM_TYPE_RANGE_ALLOC) {
+		struct __mem *curr_mem = NULL;
 		list_for_each_entry(curr_mem, &zdev->zm_list_head, link) {
 			if (curr_mem->zm_used &&
-			    curr_mem->zm_type == ZOCL_MEM_TYPE_CMA) {
+			    curr_mem->zm_type == __MEM_TYPE_CMA) {
 				mem = curr_mem;
 				break;
 			}
@@ -253,9 +257,9 @@ void zocl_update_mem_stat(struct drm_zocl_dev *zdev, u64 size, int count,
 
 
 
-int zocl_iommu_unmap_bo(struct drm_device *dev, struct drm_zocl_bo *bo)
+int __iommu_unmap_bo(struct drm_device *dev, struct drm___bo *bo)
 {
-	struct drm_zocl_dev *zdev = dev->dev_private;
+	struct drm___dev *zdev = dev->dev_private;
 	/* If IOMMU map had failed before bo->uaddr will be zero */
 	if (bo->uaddr)
 		iommu_unmap(zdev->domain, bo->uaddr, bo->gem_base.size);
@@ -263,53 +267,53 @@ int zocl_iommu_unmap_bo(struct drm_device *dev, struct drm_zocl_bo *bo)
 }
 
 static inline bool
-zocl_bo_userptr(const struct drm_zocl_bo *bo)
+__bo_userptr(const struct drm___bo *bo)
 {
-	return (bo->flags & ZOCL_BO_FLAGS_USERPTR);
+	return (bo->flags & __BO_FLAGS_USERPTR);
 }
 
-void zocl_free_bo(struct drm_gem_object *obj)
+void __free_bo(struct drm_gem_object *obj)
 {
-	struct drm_zocl_bo *zocl_obj;
-	struct drm_zocl_dev *zdev;
+	struct drm___bo *__obj;
+	struct drm___dev *zdev;
 	int npages;
 
 	if (IS_ERR(obj) || !obj)
 		return;
 
 	DRM_DEBUG("Freeing BO\n");
-	zocl_obj = to_zocl_bo(obj);
+	__obj = to___bo(obj);
 	zdev = obj->dev->dev_private;
 
 	if (!zdev->domain) {
-		zocl_describe(zocl_obj);
-		if (zocl_obj->flags & ZOCL_BO_FLAGS_USERPTR)
-			zocl_free_userptr_bo(obj);
-		else if (zocl_obj->flags & ZOCL_BO_FLAGS_HOST_BO)
-			zocl_free_host_bo(obj);
-		else if (zocl_obj->flags & ZOCL_BO_FLAGS_CMA) {
+		__describe(__obj);
+		if (__obj->flags & __BO_FLAGS_USERPTR)
+			__free_userptr_bo(obj);
+		else if (__obj->flags & __BO_FLAGS_HOST_BO)
+			__free_host_bo(obj);
+		else if (__obj->flags & __BO_FLAGS_CMA) {
 			/* Update memory usage statistics */
-			zocl_update_mem_stat(zdev, obj->size, -1,
-			    zocl_obj->mem_index);
+			__update_mem_stat(zdev, obj->size, -1,
+			    __obj->mem_index);
 			/* free resources associated with a CMA GEM object */
 			drm_gem_cma_free_object(obj);
 
 		} else {
-			if (zocl_obj->mm_node) {
+			if (__obj->mm_node) {
 				mutex_lock(&zdev->mm_lock);
-				drm_mm_remove_node(zocl_obj->mm_node);
+				drm_mm_remove_node(__obj->mm_node);
 				mutex_unlock(&zdev->mm_lock);
-				kfree(zocl_obj->mm_node);
-				if (zocl_obj->vmapping) {
-					memunmap(zocl_obj->vmapping);
-					zocl_obj->vmapping = NULL;
+				kfree(__obj->mm_node);
+				if (__obj->vmapping) {
+					memunmap(__obj->vmapping);
+					__obj->vmapping = NULL;
 				}
-				zocl_update_mem_stat(zdev, obj->size, -1,
-				    zocl_obj->mem_index);
+				__update_mem_stat(zdev, obj->size, -1,
+				    __obj->mem_index);
 			}
 			/* release GEM buffer object resources */
 			drm_gem_object_release(obj);
-			kfree(zocl_obj);
+			kfree(__obj);
 		}
 
 		return;
@@ -319,36 +323,36 @@ void zocl_free_bo(struct drm_gem_object *obj)
 	/* release GEM buffer object resources */
 	drm_gem_object_release(obj);
 
-	if (zocl_obj->vmapping)
-		vunmap(zocl_obj->vmapping);
-	zocl_obj->vmapping = NULL;
+	if (__obj->vmapping)
+		vunmap(__obj->vmapping);
+	__obj->vmapping = NULL;
 
-	zocl_iommu_unmap_bo(obj->dev, zocl_obj);
-	if (zocl_obj->pages) {
-		if (zocl_bo_userptr(zocl_obj)) {
-			release_pages(zocl_obj->pages, npages);
-			kvfree(zocl_obj->pages);
+	__iommu_unmap_bo(obj->dev, __obj);
+	if (__obj->pages) {
+		if (__bo_userptr(__obj)) {
+			release_pages(__obj->pages, npages);
+			kvfree(__obj->pages);
 		} else {
-			drm_gem_put_pages(obj, zocl_obj->pages, false, false);
+			drm_gem_put_pages(obj, __obj->pages, false, false);
 
 			/* Update memory usage statistics */
-			zocl_update_mem_stat(zdev, obj->size, -1,
-			    zocl_obj->mem_index);
+			__update_mem_stat(zdev, obj->size, -1,
+			    __obj->mem_index);
 		}
 	}
-	if (zocl_obj->sgt)
-		sg_free_table(zocl_obj->sgt);
-	zocl_obj->sgt = NULL;
-	zocl_obj->pages = NULL;
-	kfree(zocl_obj);
+	if (__obj->sgt)
+		sg_free_table(__obj->sgt);
+	__obj->sgt = NULL;
+	__obj->pages = NULL;
+	kfree(__obj);
 }
 
-static vm_fault_t zocl_bo_fault(struct vm_fault *vmf)
+static vm_fault_t __bo_fault(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
 	struct drm_gem_object *obj = vma->vm_private_data;
-	struct drm_zocl_bo *bo = to_zocl_bo(obj);
-	struct drm_zocl_dev *zdev = obj->dev->dev_private;
+	struct drm___bo *bo = to___bo(obj);
+	struct drm___dev *zdev = obj->dev->dev_private;
 	struct page *page;
 	pgoff_t offset;
 	int err;
@@ -376,51 +380,53 @@ static vm_fault_t zocl_bo_fault(struct vm_fault *vmf)
 	return VM_FAULT_SIGBUS;
 }
 
-const struct vm_operations_struct zocl_bo_vm_ops = {
-	.fault = zocl_bo_fault,
+const struct vm_operations_struct __bo_vm_ops = {
+	.fault = __bo_fault,
 	.open  = drm_gem_vm_open,
 	.close = drm_gem_vm_close,
 };
 
-const struct drm_gem_object_funcs zocl_gem_object_funcs = {
-	.free = zocl_free_bo,
-	.vm_ops = &zocl_bo_vm_ops,
+const struct drm_gem_object_funcs __gem_object_funcs = {
+	.free = __free_bo,
+	.vm_ops = &__bo_vm_ops,
 	.get_sg_table = drm_gem_cma_get_sg_table,
 	.vmap = drm_gem_cma_vmap,
 	.export = drm_gem_prime_export,
 };
 
-static struct drm_zocl_bo *
-zocl_create_cma_mem(struct drm_device *dev, size_t size)
+static struct drm___bo *
+__create_cma_mem(struct drm_device *dev, size_t size)
 {
 	struct drm_gem_cma_object *cma_obj;
-	struct drm_zocl_bo *bo;
+	struct drm___bo *bo;
 
 	/* Allocate from CMA buffer */
 	cma_obj = drm_gem_cma_create(dev, size);
 	if (IS_ERR(cma_obj))
 		return ERR_PTR(-ENOMEM);
 
-	bo = to_zocl_bo(&cma_obj->base);
+  printk("cma obj is null %d",cma_obj == NULL);
+
+	bo = to___bo(&cma_obj->base);
 
 	return bo;
 }
 
 #define	GET_MEM_INDEX(x)	((x) & 0xFFFF)
 
-static struct drm_zocl_bo *
-zocl_create_range_mem(struct drm_device *dev, size_t size, struct zocl_mem *mem)
+static struct drm___bo *
+__create_range_mem(struct drm_device *dev, size_t size, struct __mem *mem)
 {
-	struct drm_zocl_dev *zdev = dev->dev_private;
-	struct drm_zocl_bo *bo = NULL;
-	struct zocl_mem *head_mem = mem;
+	struct drm___dev *zdev = dev->dev_private;
+	struct drm___bo *bo = NULL;
+	struct __mem *head_mem = mem;
 	int err = -ENOMEM;
 
-	bo = kzalloc(sizeof(struct drm_zocl_bo), GFP_KERNEL);
+	bo = kzalloc(sizeof(struct drm___bo), GFP_KERNEL);
 	if (IS_ERR(bo))
 		return ERR_PTR(-ENOMEM);
 
-	bo->gem_base.funcs = &zocl_gem_object_funcs;
+	bo->gem_base.funcs = &__gem_object_funcs;
 	err = drm_gem_object_init(dev, &bo->gem_base, size);
 	if (err) {
 		kfree(bo);
@@ -437,16 +443,16 @@ zocl_create_range_mem(struct drm_device *dev, size_t size, struct zocl_mem *mem)
 
 	mutex_lock(&zdev->mm_lock);
 	do {
-		if (mem->zm_type == ZOCL_MEM_TYPE_CMA) {
-			struct drm_zocl_bo *cma_bo =
-				zocl_create_cma_mem(dev, size);
+		if (mem->zm_type == __MEM_TYPE_CMA) {
+			struct drm___bo *cma_bo =
+				__create_cma_mem(dev, size);
 			if (!IS_ERR(cma_bo)) {
 				/* Get the memory from CMA memory region */
 				mutex_unlock(&zdev->mm_lock);
 				kfree(bo->mm_node);
 				drm_gem_object_release(&bo->gem_base);
 				kfree(bo);
-				cma_bo->flags |= ZOCL_BO_FLAGS_CMA;
+				cma_bo->flags |= __BO_FLAGS_CMA;
 				return cma_bo;
 			}
 			DRM_WARN("Memory allocated from CMA region"
@@ -493,20 +499,19 @@ zocl_create_range_mem(struct drm_device *dev, size_t size, struct zocl_mem *mem)
 	err = drm_gem_create_mmap_offset(&bo->gem_base);
 	if (err) {
 		DRM_ERROR("Fail to create BO mmap offset.\n");
-		zocl_free_bo(&bo->gem_base);
+		__free_bo(&bo->gem_base);
 		return ERR_PTR(err);
 	}
 
 	return bo;
 }
 
-static struct drm_zocl_bo *
-zocl_create_bo(struct drm_device *dev, uint64_t unaligned_size, u32 user_flags)
+static struct drm___bo *
+__create_bo(struct drm_device *dev, uint64_t unaligned_size, u32 user_flags)
 {
-  printk("drm zocl create bo");
+  printk("drm _ create bo");
 	size_t size = PAGE_ALIGN(unaligned_size);
-	struct drm_zocl_dev *zdev = dev->dev_private;
-	struct drm_zocl_bo *bo = NULL;
+	struct drm___bo *bo = NULL;
 	int err = 0;
 
 	if (!size)
@@ -517,59 +522,62 @@ zocl_create_bo(struct drm_device *dev, uint64_t unaligned_size, u32 user_flags)
 		if (!bo)
 			return ERR_PTR(-ENOMEM);
 
-		bo->gem_base.funcs = &zocl_gem_object_funcs;
+		bo->gem_base.funcs = &__gem_object_funcs;
 		err = drm_gem_object_init(dev, &bo->gem_base, size);
-		if (err < 0)
-			goto free;
-	} else if (user_flags & ZOCL_BO_FLAGS_CMA) {
-		bo = zocl_create_cma_mem(dev, size);
+//		if (err < 0)
+//			goto free;
+	} else if (user_flags & __BO_FLAGS_CMA) {
+		bo = __create_cma_mem(dev, size);
 	} else {
 		/* We are allocating from a separate mem Index, i.e. PL-DDR or LPDDR */
 		unsigned int mem_index = GET_MEM_INDEX(user_flags);
-		struct zocl_mem *mem = zocl_get_mem_by_mem_index(zdev, mem_index);
+		struct __mem *mem = __get_mem_by_mem_index(zdev, mem_index);
 		if (mem == NULL)
 			return ERR_PTR(-ENOMEM);
 
-		if (!mem->zm_used || mem->zm_type != ZOCL_MEM_TYPE_RANGE_ALLOC)
+		if (!mem->zm_used || mem->zm_type != __MEM_TYPE_RANGE_ALLOC)
 			return ERR_PTR(-EINVAL);
 
-		bo = zocl_create_range_mem(dev, size, mem);
+		//bo = __create_range_mem(dev, size, mem);
 	}
-
-	if (user_flags & ZOCL_BO_FLAGS_EXECBUF) {
-		bo->flags = ZOCL_BO_FLAGS_EXECBUF;
-		bo->metadata.state = DRM_ZOCL_EXECBUF_STATE_ABORT;
-	}
+  printk("all ok");
+	//if (user_flags & __BO_FLAGS_EXECBUF) {
+	//	bo->flags = __BO_FLAGS_EXECBUF;
+	//	bo->metadata.state = DRM___EXECBUF_STATE_ABORT;
+	//}
 
 	return bo;
-free:
-	kfree(bo);
-	return ERR_PTR(err);
+//free:
+//	kfree(bo);
+//	return ERR_PTR(err);
 }
 
-#define ZOCL_DRM_GEM_OBJECT_PUT_UNLOCKED drm_gem_object_put
+#define __DRM_GEM_OBJECT_PUT_UNLOCKED drm_gem_object_put
 
 
-static struct drm_zocl_bo *
-zocl_create_svm_bo(struct drm_device *dev, void *data, struct drm_file *filp)
+static struct drm___bo *
+__create_svm_bo(struct drm_device *dev, void *data, struct drm_file *filp)
 {
-	struct drm_zocl_create_bo *args = data;
-	struct drm_zocl_bo *bo = NULL;
+	struct drm___create_bo *args = data;
+	struct drm___bo *bo = NULL;
 	size_t bo_size = 0;
 	int ret = 0;
 
-	printk("zocl_create_svm_bo");
+	printk("__create_svm_bo");
 
-	if ((args->flags & ZOCL_BO_FLAGS_COHERENT) ||
-			(args->flags & ZOCL_BO_FLAGS_CMA))
+	if ((args->flags & __BO_FLAGS_COHERENT) ||
+			(args->flags & __BO_FLAGS_CMA))
 		return ERR_PTR(-EINVAL);
 
-	args->flags |= ZOCL_BO_FLAGS_SVM;
-	if (!(args->flags & ZOCL_BO_FLAGS_SVM))
+	args->flags |= __BO_FLAGS_SVM;
+	if (!(args->flags & __BO_FLAGS_SVM))
 		return ERR_PTR(-EINVAL);
 
-	bo = zocl_create_bo(dev, args->size, args->flags);
-	bo->flags |= ZOCL_BO_FLAGS_SVM;
+	bo = __create_bo(dev, args->size, args->flags);
+
+  printk("hello");
+	printk("%d", bo == NULL);
+	bo->flags |= __BO_FLAGS_SVM;
 	bo->mem_index = GET_MEM_INDEX(args->flags);
 
 	if (IS_ERR(bo)) {
@@ -603,16 +611,16 @@ zocl_create_svm_bo(struct drm_device *dev, void *data, struct drm_file *filp)
 	if (ret < 0)
 		goto out_free;
 
-	zocl_describe(bo);
-	ZOCL_DRM_GEM_OBJECT_PUT_UNLOCKED(&bo->gem_base);
+	__describe(bo);
+	__DRM_GEM_OBJECT_PUT_UNLOCKED(&bo->gem_base);
 
 	/* Update memory usage statistics */
-	zocl_update_mem_stat(dev->dev_private, args->size, 1, bo->mem_index);
+	__update_mem_stat(dev->dev_private, args->size, 1, bo->mem_index);
 
 	return bo;
 
 out_free:
-	zocl_free_bo(&bo->gem_base);
+	__free_bo(&bo->gem_base);
 	return ERR_PTR(ret);
 }
 
@@ -628,7 +636,7 @@ out_free:
 
 
 
-static inline uint32_t zocl_convert_bo_uflags(uint32_t uflags)
+static inline uint32_t __convert_bo_uflags(uint32_t uflags)
 {
 	uint32_t zflags = 0;
 
@@ -637,36 +645,34 @@ static inline uint32_t zocl_convert_bo_uflags(uint32_t uflags)
 	 * CACHEABLE.
 	 */
 	if (uflags & XCL_BO_FLAGS_EXECBUF)
-		zflags |= ZOCL_BO_FLAGS_EXECBUF;
+		zflags |= __BO_FLAGS_EXECBUF;
 
 	if (uflags & XCL_BO_FLAGS_CACHEABLE)
-		zflags |= ZOCL_BO_FLAGS_CACHEABLE;
+		zflags |= __BO_FLAGS_CACHEABLE;
 
 	zflags |= (uflags & 0xFFFF);
 
 	return zflags;
 }
 
-int zocl_create_bo_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
+int __create_bo_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 {
 	printk("CALLED IOCTL");
 	int ret = 0;
-  struct drm_zocl_create_bo *args = data;
-  struct drm_zocl_bo *bo = NULL;
-  struct drm_zocl_dev *zdev = dev->dev_private;
-  struct zocl_mem *mem = NULL;
+  struct drm___create_bo *args = data;
+  struct drm___bo *bo = NULL;
+  struct __mem *mem = NULL;
   unsigned int mem_index = 0;
   uint32_t user_flags = args->flags;
 
-  printk("drm zocl create bo");
+  printk("[drm]  create bo");
 
-  args->flags = zocl_convert_bo_uflags(args->flags);
-  printk("%d",zdev == NULL);
+  args->flags = __convert_bo_uflags(args->flags);
   if (zdev->domain) {
-    printk("drm zocl converted bo uflags2");
+    printk  ("drm _ converted bo uflags2");
 
-  	bo = zocl_create_svm_bo(dev, data, filp);
-  	  printk("drm zocl converted bo uflags3");
+  	bo = __create_svm_bo(dev, data, filp);
+  	  printk("drm _ converted bo uflags3");
 
   	if (IS_ERR(bo))
   		return PTR_ERR(bo);
@@ -674,15 +680,17 @@ int zocl_create_bo_ioctl(struct drm_device *dev, void *data, struct drm_file *fi
   	return 0;
   }
 
-  printk("drm zocl converted bo uflags4");
+  printk("drm _ converted bo uflags4");
 
 
   mem_index = GET_MEM_INDEX(args->flags);
-  mem = zocl_get_mem_by_mem_index(zdev, mem_index);
+  return 0;
+
+  //mem = __get_mem_by_mem_index(zdev, mem_index);
 
   	/* Always allocate EXECBUF from CMA */
-  if (args->flags & ZOCL_BO_FLAGS_EXECBUF)
-  	args->flags |= ZOCL_BO_FLAGS_CMA;
+  if (args->flags & __BO_FLAGS_EXECBUF)
+  	args->flags |= __BO_FLAGS_CMA;
   else {
   	/*
   	 * For specified valid DDR bank, we only mark CMA flags
@@ -691,41 +699,43 @@ int zocl_create_bo_ioctl(struct drm_device *dev, void *data, struct drm_file *fi
   	 * allocate from CMA by default.
   	 */
   	if (mem && mem->zm_used) {
-  		if (mem->zm_type == ZOCL_MEM_TYPE_CMA)
-  			args->flags |= ZOCL_BO_FLAGS_CMA;
+  		if (mem->zm_type == __MEM_TYPE_CMA)
+  			args->flags |= __BO_FLAGS_CMA;
   	} else {
-  		DRM_WARN("Allocating BO from CMA for invalid or unused memory index[%d]\n",
-  				mem_index);
-  		args->flags |= ZOCL_BO_FLAGS_CMA;
+  		//DRM_WARN("Allocating BO from CMA for invalid or unused memory index[%d]\n",
+  				//mem_index);
+  		args->flags |= __BO_FLAGS_CMA;
   	}
   }
 
-  if (!(args->flags & ZOCL_BO_FLAGS_CACHEABLE)) {
+  if (!(args->flags & __BO_FLAGS_CACHEABLE)) {
   	/* If cacheable is not set, make sure we set COHERENT. */
-  	args->flags |= ZOCL_BO_FLAGS_COHERENT;
-  } else if (!(args->flags & ZOCL_BO_FLAGS_CMA)) {
+  	args->flags |= __BO_FLAGS_COHERENT;
+  } else if (!(args->flags & __BO_FLAGS_CMA)) {
   	/*
   	 * We do not support allocating cacheable BO from PL-DDR or
   	 * LPDDR
   	 */
   	DRM_WARN("Cache is not supported and turned off for PL-DDR or LPDDR\n");
-  	args->flags &= ~ZOCL_BO_FLAGS_CACHEABLE;
+  	args->flags &= ~__BO_FLAGS_CACHEABLE;
   }
 
-  bo = zocl_create_bo(dev, args->size, args->flags);
+  bo = __create_bo(dev, args->size, args->flags);
+
+
   if (IS_ERR(bo)) {
   	DRM_DEBUG("object creation failed\n");
   	return PTR_ERR(bo);
   }
 
   bo->mem_index = mem_index;
-  if (args->flags & ZOCL_BO_FLAGS_CACHEABLE)
-  	bo->flags |= ZOCL_BO_FLAGS_CACHEABLE;
+  if (args->flags & __BO_FLAGS_CACHEABLE)
+  	bo->flags |= __BO_FLAGS_CACHEABLE;
   else
-  	bo->flags |= ZOCL_BO_FLAGS_COHERENT;
+  	bo->flags |= __BO_FLAGS_COHERENT;
 
-  if (args->flags & ZOCL_BO_FLAGS_CMA) {
-  	bo->flags |= ZOCL_BO_FLAGS_CMA;
+  if (args->flags & __BO_FLAGS_CMA) {
+  	bo->flags |= __BO_FLAGS_CMA;
   	ret = drm_gem_handle_create(filp, &bo->cma_base.base,
   	    &args->handle);
   	if (ret) {
@@ -737,15 +747,15 @@ int zocl_create_bo_ioctl(struct drm_device *dev, void *data, struct drm_file *fi
   	ret = drm_gem_handle_create(filp, &bo->gem_base,
   	    &args->handle);
   	if (ret) {
-  		zocl_free_bo(&bo->gem_base);
+  		__free_bo(&bo->gem_base);
   		DRM_DEBUG("handle create failed\n");
   		return ret;
   	}
   }
 
   bo->user_flags = user_flags;
-  zocl_describe(bo);
-  ZOCL_DRM_GEM_OBJECT_PUT_UNLOCKED(&bo->cma_base.base);
+  __describe(bo);
+  __DRM_GEM_OBJECT_PUT_UNLOCKED(&bo->cma_base.base);
 
   /*
    * Update memory usage statistics.
@@ -754,28 +764,28 @@ int zocl_create_bo_ioctl(struct drm_device *dev, void *data, struct drm_file *fi
    *       the required size while gem object records the
    *       actual size allocated.
    */
-  zocl_update_mem_stat(zdev, bo->gem_base.size, 1, bo->mem_index);
+  __update_mem_stat(zdev, bo->gem_base.size, 1, bo->mem_index);
 
-  return ret;
+  return 0;
 }
 
 
 
 
-static const struct drm_ioctl_desc zocl_ioctls[] = {
-	DRM_IOCTL_DEF_DRV(ZOCL_CREATE_BO, zocl_create_bo_ioctl,
+static const struct drm_ioctl_desc __ioctls[] = {
+	DRM_IOCTL_DEF_DRV(__CREATE_BO, __create_bo_ioctl,
 			DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW)
 };
 
 struct drm_gem_object *
-zocl_gem_create_object(struct drm_device *dev, size_t size)
+__gem_create_object(struct drm_device *dev, size_t size)
 {
-	struct drm_zocl_bo *bo = kzalloc(sizeof(struct drm_zocl_bo), GFP_KERNEL);
+	struct drm___bo *bo = kzalloc(sizeof(struct drm___bo), GFP_KERNEL);
 
 	return (&bo->gem_base);
 }
 
-static const struct file_operations zocl_driver_fops = {
+static const struct file_operations __driver_fops = {
 	.open           = drm_open,
 	.read           = drm_read,
 	.unlocked_ioctl = drm_ioctl,
@@ -788,11 +798,11 @@ static struct drm_driver mydrm = {
 	.driver_features           = DRIVER_GEM | DRIVER_RENDER,
 
 
-	.gem_create_object         = zocl_gem_create_object,
+	.gem_create_object         = __gem_create_object,
 
-	.ioctls                    = zocl_ioctls,
+	.ioctls                    = __ioctls,
 	.num_ioctls                = 1,
-	.fops                      = &zocl_driver_fops,
+	.fops                      = &__driver_fops,
 
 };
 
@@ -801,10 +811,9 @@ static struct drm_driver mydrm = {
 
 static int my_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
-	struct drm_zocl_dev	*zdev;
 	 zdev = devm_kzalloc(&pdev->dev, sizeof(*zdev), GFP_KERNEL);
    struct drm_device *drm;
-      printk("===== DRM PLATFORM PROBE =====");
+      printk("===== DRM PCI PROBE =====");
 
       drm = drm_dev_alloc(&mydrm, &pdev->dev);
 
@@ -812,12 +821,11 @@ static int my_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
       int res2 = drm_dev_register(drm, 0);
 
       if(res2 == 0){
-          printk("----- SUCCESS -----%s----%s",mydrm.name, drm->unique);
+          printk("----- SUCCESS -----");
       } else {
           printk("----- ERROR -----");
       }
 
-      printk("%d",zdev == NULL);
       drm->dev_private = zdev;
       zdev->ddev = drm;
 
